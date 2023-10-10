@@ -1,4 +1,5 @@
 import streamlit as st
+from decimal import Decimal
 
 st.header("Хомякова Лилия Сергеевна, 4 курс, 4 группа, 2023")
 
@@ -22,8 +23,8 @@ with st.form("My calculator"):
     submitted = st.form_submit_button("Submit")
     if submitted:
         try:
-            num1 = float(num1.replace(',', '.').replace(' ', ''))
-            num2 = float(num2.replace(',', '.').replace(' ', ''))
+            num1 = Decimal(num1.replace(',', '.').replace(' ', ''))
+            num2 = Decimal(num2.replace(',', '.').replace(' ', ''))
             st.write(f'Answer: {operation(num1, num2, option):.20f}')
         except:
             st.write('Invalid values')
