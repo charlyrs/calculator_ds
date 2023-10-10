@@ -24,6 +24,6 @@ with st.form("My calculator"):
         try:
             num1 = float(num1.replace(',', '.').replace(' ', ''))
             num2 = float(num2.replace(',', '.').replace(' ', ''))
-            st.write(f'Answer: {operation(num1, num2, option)}')
+            st.write(f'Answer: {operation(num1, num2, option):.20f}')
         except:
             st.write('Invalid values')
