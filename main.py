@@ -18,29 +18,60 @@ def operation(n1: Decimal, n2: Decimal, op):
     return 0
 
 
-value1, value2 = "", ""
-if 'val1' in st.session_state:
-    value1 = st.session_state['val1']
-if 'val2' in st.session_state:
-    value2 = st.session_state['val2']
+def has_zero_division(numbers: list, operator_options: list) -> bool:
+    check_list = [True for num, option in zip(numbers, ["filler"] + operator_options) if num == 0 and option == "/"]
+    return len(check_list) > 0
+
+
+def more_priority(op1: str, op2: str) -> bool:
+    if op1 == '+' or op1 == "-":
+        return True
+    else:
+        return False
+
+
+def format_num(num: Decimal) -> str:
+    num = '{:,}'.format(num).replace(',', ' ')
+    num = num.rstrip("0")
+    if num[-1] == '.':
+        num = num[:-1]
+    return num
+
+
+DEFAULT_VALUE = 0
 with st.form("My calculator"):
-    num1 = st.text_area(label='Number 1', placeholder='First number', value=value1)
-    option = st.selectbox(label='Operation', options=["+", "-", "*", "/"])
-    num2 = st.text_area(label='Number 2', placeholder='Second number', value=value2)
+    nums = []
+    options = []
+    for i in range(3):
+        nums.append(st.text_area(label=f'Number {i + 1}', placeholder=f'Number {i + 1}', value=DEFAULT_VALUE))
+        options.append(st.selectbox(label=f'Operation {i + 1}', options=["+", "-", "*", "/"]))
+    i += 1
+    nums.append(st.text_area(label=f'Number {i + 1}', placeholder=f'Number {i + 1}', value=DEFAULT_VALUE))
+    round_options = {"Math": decimal.ROUND_HALF_UP,
+                     "Accountant": decimal.ROUND_HALF_EVEN,
+                     "Floor": decimal.ROUND_HALF_DOWN}
+    selected_round_option = round_options[st.selectbox(label="Choose round type", options=round_options.keys())]
     submitted = st.form_submit_button("Submit")
     if submitted:
         try:
-            num1 = Decimal(num1.replace(',', '.').replace(' ', ''))
-            num2 = Decimal(num2.replace(',', '.').replace(' ', ''))
-            if num2 == 0 and option == "/":
+            nums = [Decimal(x.replace(',', '.').replace(' ', '')) for x in nums]
+            if has_zero_division(nums, options):
                 st.write("Cannot devide by zero")
             else:
+                ten_digits = Decimal('0.0000000001')
+                ans = operation(nums[1], nums[2], options[1]).quantize(ten_digits, rounding=decimal.ROUND_HALF_UP)
+                if more_priority(options[0], options[2]):
+                    ans = operation(ans, nums[3], options[2]).quantize(ten_digits, rounding=decimal.ROUND_HALF_UP)
+                    ans = operation(nums[0], ans, options[0]).quantize(ten_digits, rounding=decimal.ROUND_HALF_UP)
+                else:
+                    ans = operation(nums[0], ans, options[0]).quantize(ten_digits, rounding=decimal.ROUND_HALF_UP)
+                    ans = operation(ans, nums[3], options[2]).quantize(ten_digits, rounding=decimal.ROUND_HALF_UP)
                 six_digits = Decimal('0.000001')
-                ans = operation(num1, num2, option).quantize(six_digits,rounding=decimal.ROUND_HALF_UP)
-                ans = '{:,}'.format(ans).replace(',', ' ')
-                ans = ans.rstrip("0")
-                if ans[-1] == '.':
-                    ans = ans[:-1]
-                st.write(f'Answer: {ans}'.replace(',', '.'))
+                integer_num = Decimal('1')
+                full_res = ans.quantize(six_digits, rounding=decimal.ROUND_HALF_UP)
+                full_res = format_num(full_res)
+                rounded = ans.quantize(integer_num, rounding=selected_round_option)
+                st.write(f'Answer: {full_res}'.replace(',', '.'))
+                st.write(f'Rounded: {rounded}'.replace(',', '.'))
         except:
             st.write('Invalid values')
